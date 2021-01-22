@@ -34,8 +34,8 @@ do
           MODIFY_COLUMN_STR+=", MODIFY $COLUMN_NAME varchar(24) CHARACTER SET latin1 COLLATE latin1_bin"
         fi
       fi
+      ((COUNT=COUNT+1))
     fi
-    ((COUNT=COUNT+1))
   done
 
   # echo 'ALTER TABLE '$TABLE_NAME'' $MODIFY_COLUMN_STR ';'
