@@ -54,7 +54,7 @@ do
   STR_CF_NAME="_cfname"
   STR_CF="_cf"
 
-  for i in {0..31}; 
+  for i in {0..15}; 
   do 
     if [[ $i == 0 ]]; then
       SQL_COMMENT+=" ' p$i$STR_CF_NAME=${TABLE_NAME,,}_$i$STR_CF"
