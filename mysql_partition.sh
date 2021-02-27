@@ -12,8 +12,9 @@ done
 echo $sql
 for TABLE_NAME in $(mysql -u $user -p$pass $database -s -e 'SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME = '\"ORG_ID\"' AND TABLE_SCHEMA='\"$database\"';')
 do
-  echo "Changing charset of table: $TABLE_NAME"
+  ROW_COUNT=$(mysql -u $user -p$pass $database -s -e "SELECT COUNT(*) FROM $TABLE_NAME;")
 
+  echo "Changing charset of table: $TABLE_NAME"
   COUNT=0
   MODIFY_COLUMN_STR=''
   set +m; shopt -s lastpipe
@@ -38,6 +39,11 @@ do
     fi
   done
 
+  if [[ $ROW_COUNT -le 5000 ]]; then
+    echo "ALTER TABLE $TABLE_NAME $MODIFY_COLUMN_STR;">>sql_partition.sql
+    continue;
+  fi
+
   # echo 'ALTER TABLE '$TABLE_NAME'' $MODIFY_COLUMN_STR ';'
   SQL_DROP_PRIMARY_KEY="DROP PRIMARY KEY"
   SQL_PRIMARY_KEY="ADD PRIMARY KEY (ID, ORG_ID)"
@@ -48,7 +54,7 @@ do
   STR_CF_NAME="_cfname"
   STR_CF="_cf"
 
-  for i in {0..63}; 
+  for i in {0..31}; 
   do 
     if [[ $i == 0 ]]; then
       SQL_COMMENT+=" ' p$i$STR_CF_NAME=${TABLE_NAME,,}_$i$STR_CF"
@@ -60,8 +66,8 @@ do
   # Concat end string of comment
   SQL_COMMENT+="'"
 
-  echo "ALTER TABLE $TABLE_NAME $MODIFY_COLUMN_STR, $SQL_DROP_PRIMARY_KEY, $SQL_PRIMARY_KEY $SQL_COMMENT $SQL_PARTITION_BY_KEY $SQL_PARTITION_NUMBER;"
-  mysql -u $user -p$pass $database -s -e "ALTER TABLE $TABLE_NAME $MODIFY_COLUMN_STR, $SQL_DROP_PRIMARY_KEY, $SQL_PRIMARY_KEY $SQL_COMMENT $SQL_PARTITION_BY_KEY $SQL_PARTITION_NUMBER;"
+  echo "ALTER TABLE $TABLE_NAME $MODIFY_COLUMN_STR, $SQL_DROP_PRIMARY_KEY, $SQL_PRIMARY_KEY $SQL_COMMENT $SQL_PARTITION_BY_KEY $SQL_PARTITION_NUMBER;">>sql_partition.sql
+#  mysql -u $user -p$pass $database -s -e "ALTER TABLE $TABLE_NAME $MODIFY_COLUMN_STR, $SQL_DROP_PRIMARY_KEY, $SQL_PRIMARY_KEY $SQL_COMMENT $SQL_PARTITION_BY_KEY $SQL_PARTITION_NUMBER;"
 
 done
 
